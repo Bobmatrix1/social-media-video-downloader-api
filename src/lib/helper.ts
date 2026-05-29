@@ -81,22 +81,25 @@ export function parseDownloadOptions<T extends DownloadKeyWord>(
   }
 
   if (filter === 'mergevideo') {
-    // quality can be 1080p or 1920x1080 handle both separat
-    const height = quality?.includes('x')
+    // quality can be 1080p, 1920x1080, or 1080 handle all cases
+    let height = quality?.includes('x')
       ? quality?.split('x')[1]
       : quality?.includes('p')
         ? quality?.split('p')[0]
-        : null;
+        : quality;
 
-    if (height) {
+    // Sanitize height - remove any non-digit characters
+    height = height?.replace(/\D/g, '');
+
+    if (height && !isNaN(Number(height))) {
       formatArr = [
         '-f',
-        `bv*[height<=${height}]` + '[ext=mp4]+ba',
+        `bv*[height<=${height}][ext=mp4]+ba[ext=m4a]/bv*[height<=${height}]+ba/b[height<=${height}]`,
         '--merge-output-format',
         'mp4',
       ];
     } else {
-      formatArr = ['-f', 'bv*[ext=mp4]+ba', '--merge-output-format', 'mp4'];
+      formatArr = ['-f', 'bv*[ext=mp4]+ba[ext=m4a]/bv*+ba/b', '--merge-output-format', 'mp4'];
     }
   }
 
@@ -111,29 +114,21 @@ export function parseDownloadOptions<T extends DownloadKeyWord>(
 }
 
 export const getVideoFormats = (info: YtdlpVideoInfo) => {
-  const formats = info.formats.filter((format) => format.ext !== 'mhtml');
+  const formats = info.formats.filter((f) => f.vcodec !== 'none');
 
-  // where width and  height is not null
-  const allVideoFormats = formats.filter(
-    (format) => format.width && format.height,
-  );
+  // Extract heights and map to 'p' labels
+  const heights = formats
+    .map((f) => f.height)
+    .filter((h): h is number => !!h && h >= 360); // Minimum 360p
 
-  // get unique by height
-  const uniqueVideoFormats = allVideoFormats.filter(
-    (format, index, self) =>
-      index === self.findIndex((t) => t.height === format.height),
-  );
+  const uniqueHeights = [...new Set(heights)].sort((a, b) => b - a);
+  
+  const videoFormats = uniqueHeights.map(h => `${h}p`);
 
-  // map to qualityLabel
-  const formatsWithQualityLabel = uniqueVideoFormats.map((format) => ({
-    ...format,
-    qualityLabel: videoQualityLabel[format.resolution] || format.resolution,
-  }));
+  // Ensure we always have at least some basic formats if extraction fails
+  if (videoFormats.length === 0) {
+    return ['1080p', '720p', '480p', '360p'];
+  }
 
-  // map to qualityLabel and remove 144p
-  const videoFormats = formatsWithQualityLabel
-    .filter((format) => format.qualityLabel !== '144p')
-    .map((format) => format.qualityLabel);
-
-  return [...new Set(videoFormats)];
+  return videoFormats;
 };
