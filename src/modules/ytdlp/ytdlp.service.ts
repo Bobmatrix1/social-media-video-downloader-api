@@ -58,6 +58,23 @@ export class YtdlpService implements OnModuleInit {
   async onModuleInit() {
     await this.ensureBinariesDirectory();
     await this.setupBinaries();
+    await this.setupCookies();
+  }
+
+  private async setupCookies() {
+    const envCookies = process.env.YOUTUBE_COOKIES;
+    if (envCookies) {
+      try {
+        await fs.writeFile(this.cookiesFilePath, envCookies, 'utf8');
+        console.log('Cookies file created from YOUTUBE_COOKIES environment variable');
+      } catch (error) {
+        console.error('Failed to create cookies file:', error.message);
+      }
+    }
+  }
+
+  private hasCookies(): boolean {
+    return fsSync.existsSync(this.cookiesFilePath);
   }
 
   private async ensureBinariesDirectory() {
@@ -272,8 +289,8 @@ export class YtdlpService implements OnModuleInit {
   async ytdlp(args: string[]): Promise<{ stdout: string; stderr: string }> {
     try {
       const argsWithQuotes = this.addQuotesToCommand(args);
-      // Add cookies option only in production
-      if (process.env.NODE_ENV === 'production') {
+      // Add cookies option only in production if the file exists
+      if (process.env.NODE_ENV === 'production' && this.hasCookies()) {
         argsWithQuotes.push('--cookies', this.cookiesFilePath);
       }
       console.log(argsWithQuotes);
@@ -363,8 +380,8 @@ export class YtdlpService implements OnModuleInit {
       PROGRESS_STRING,
     ];
 
-    // Add cookies option only in production
-    if (process.env.NODE_ENV === 'production') {
+    // Add cookies option only in production if the file exists
+    if (process.env.NODE_ENV === 'production' && this.hasCookies()) {
       processArgs.push('--cookies', this.cookiesFilePath);
     }
 
