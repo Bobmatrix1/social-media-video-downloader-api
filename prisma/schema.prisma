@@ -17,7 +17,7 @@ model ApiKey {
   lastUsedAt  DateTime?
   isBlocked   Boolean    @default(false)
   blockReason String?
-  ipWhitelist String[] // Array of allowed IP addresses
+  ipWhitelist String[] // Reverted to String[] for PostgreSQL
   rateLimit   Int        @default(100) // Requests per minute
   maxDuration Int        @default(1800) // Maximum media duration in seconds (default 30 minutes)
   downloads   Download[]
