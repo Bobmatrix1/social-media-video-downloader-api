@@ -19,7 +19,7 @@ def seed(url):
         print("Creating API Key...")
         cur.execute("""
             INSERT INTO "ApiKey" (id, "userId", name, key, "isBlocked", "createdAt", "updatedAt")
-            VALUES ('key-1', 'admin-1', 'StreamAuraKey', 'dk_streamaura_fix_999', false, NOW(), NOW())
+            VALUES ('key-1', 'admin-1', 'StreamAuraKey', 'dk_6452f829837c4e5a9b2d1c3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a', false, NOW(), NOW())
             ON CONFLICT (id) DO NOTHING;
         """)
 
@@ -28,7 +28,7 @@ def seed(url):
         conn.close()
         print("\nSUCCESS!")
         print("========================================")
-        print("Your SMVD API Key is: dk_streamaura_fix_999")
+        print("Your SMVD API Key is: dk_6452f829837c4e5a9b2d1c3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a")
         print("========================================")
         print("You can now add this to your Main App on Render.")
 
